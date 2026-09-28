@@ -1,155 +1,118 @@
-<!DOCTYPE html>
-<html lang="nl">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#f4f4f6">
-  <title>Zante 2027</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f5f5f7">
+  <title>Zante · 19–26 July 2027</title>
   <link rel="stylesheet" href="css/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="js/config.js" defer></script>
   <script src="js/app.js" defer></script>
 </head>
 <body>
-  <section id="loginPage" class="login-page">
-    <div class="login-shell">
-      <div class="app-mark">Z</div>
-      <p class="overline">ZANTE 2027</p>
-      <h1>Vakantie,<br>geregeld.</h1>
-      <p class="login-copy">Alles voor de trip op één rustige plek.</p>
-      <form id="loginForm" class="login-form">
-        <label class="field"><span>Naam</span><input id="nameInput" autocomplete="name" placeholder="Nate" required></label>
-        <label class="field"><span>Room key</span><input id="roomKeyInput" type="password" placeholder="Room key" required></label>
-        <button id="loginButton" class="primary-action" type="submit">Open Zante</button>
-        <div id="loginError" class="alert alert-error hidden"></div>
-      </form>
-    </div>
-  </section>
-
-  <div id="app" class="hidden">
-    <header class="app-header">
-      <div class="trip-title"><span class="trip-dot"></span><span id="roomName">Zante 2027</span></div>
-      <button id="profileButton" class="profile-button" type="button" aria-label="Profiel en instellingen">N</button>
+  <div class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">ZAKYNTHOS · 19–26 JULY 2027</p>
+        <h1 id="pageTitle">Your week</h1>
+      </div>
+      <button class="icon-button" id="addButton" aria-label="Add plan">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
     </header>
 
-    <main class="page-shell">
-      <section id="planning" class="page-section active">
-        <header class="page-hero">
-          <div><p class="overline">7 DAGEN</p><h1>Planning</h1></div>
-          <button class="round-add" data-open-modal="eventModal" type="button" aria-label="Activiteit toevoegen">+</button>
-        </header>
-        <div id="dayTabs" class="day-tabs" aria-label="Dagen"></div>
-        <div id="events" class="content-list event-list"></div>
+    <main>
+      <section class="view active" id="weekView">
+        <section class="trip-card">
+          <div>
+            <span class="trip-kicker">ZANTE</span>
+            <strong>7 nights</strong>
+            <p>One simple place for the whole trip.</p>
+          </div>
+          <div class="trip-date"><span>19</span><small>JUL</small></div>
+        </section>
+
+        <div class="day-strip" id="dayStrip" aria-label="Trip days"></div>
+        <div class="day-heading">
+          <div>
+            <p class="eyebrow" id="selectedDate">MONDAY · 19 JULY</p>
+            <h2 id="selectedDayTitle">Day 1</h2>
+          </div>
+          <span class="count-pill" id="planCount">0 plans</span>
+        </div>
+        <div id="plansList" class="list"></div>
       </section>
 
-      <section id="ideas" class="page-section">
-        <header class="page-hero">
-          <div><p class="overline">MISSCHIEN</p><h1>Ideeën</h1></div>
-          <button class="round-add" data-open-modal="ideaModal" type="button" aria-label="Idee toevoegen">+</button>
-        </header>
-        <div id="ideasList" class="content-list"></div>
+      <section class="view" id="ideasView">
+        <div class="section-heading">
+          <div><p class="eyebrow">SAVE FOR LATER</p><h2>Ideas</h2></div>
+          <button class="small-add" data-open="ideaSheet">Add</button>
+        </div>
+        <div id="ideasList" class="list"></div>
       </section>
 
-      <section id="budget" class="page-section">
-        <header class="page-hero">
-          <div><p class="overline">SAMEN</p><h1>Budget</h1></div>
-          <button class="round-add" data-open-modal="expenseModal" type="button" aria-label="Uitgave toevoegen">+</button>
-        </header>
-        <section class="money-summary"><span>Totaal</span><strong id="budgetTotal">€0,00</strong></section>
-        <div id="expenses" class="content-list"></div>
-      </section>
-
-      <section id="packing" class="page-section">
-        <header class="page-hero">
-          <div><p class="overline">VOOR VERTREK</p><h1>Packing</h1></div>
-          <button class="round-add" data-open-modal="packingModal" type="button" aria-label="Packing item toevoegen">+</button>
-        </header>
-        <div id="packingList" class="content-list"></div>
+      <section class="view" id="packingView">
+        <div class="section-heading">
+          <div><p class="eyebrow">BEFORE YOU GO</p><h2>Packing</h2></div>
+          <button class="small-add" data-open="packingSheet">Add</button>
+        </div>
+        <div class="progress-wrap">
+          <div><strong id="packingProgress">0 of 0 packed</strong><span>Tap an item when it’s in the bag.</span></div>
+          <div class="progress-track"><div id="progressBar"></div></div>
+        </div>
+        <div id="packingList" class="list"></div>
       </section>
     </main>
 
-    <nav id="tabbar" class="liquid-dock" aria-label="Hoofdnavigatie">
-      <div id="liquidIndicator" class="liquid-indicator" aria-hidden="true"></div>
-      <button class="nav-button active" data-tab="planning" type="button" aria-label="Planning">
-        <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z"/></svg></span>
-        <span class="nav-label">Planning</span>
+    <nav class="tabbar" aria-label="Main navigation">
+      <div class="tab-indicator" id="tabIndicator"></div>
+      <button class="tab active" data-view="weekView" data-title="Your week">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14v15H5z"/></svg><span>Week</span>
       </button>
-      <button class="nav-button" data-tab="ideas" type="button" aria-label="Ideeën">
-        <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M8.3 15.4A6.8 6.8 0 1 1 15.7 15.4C14.6 16.2 14 17 14 18h-4c0-1-.6-1.8-1.7-2.6Z"/></svg></span>
-        <span class="nav-label">Ideeën</span>
+      <button class="tab" data-view="ideasView" data-title="Ideas">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M8.4 15.4A6.5 6.5 0 1 1 15.6 15.4C14.6 16.2 14 17 14 18h-4c0-1-.6-1.8-1.6-2.6Z"/></svg><span>Ideas</span>
       </button>
-      <button class="nav-button" data-tab="budget" type="button" aria-label="Budget">
-        <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v12H4zM4 10h16M15.5 15h2"/></svg></span>
-        <span class="nav-label">Budget</span>
-      </button>
-      <button class="nav-button" data-tab="packing" type="button" aria-label="Packing">
-        <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M5 7h14v14H5zM9 7v14M15 7v14"/></svg></span>
-        <span class="nav-label">Packing</span>
+      <button class="tab" data-view="packingView" data-title="Packing">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M5 7h14v14H5zM9 7v14M15 7v14"/></svg><span>Packing</span>
       </button>
     </nav>
   </div>
 
-  <div id="eventModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="eventModalTitle">
-    <div class="sheet"><div class="sheet-handle"></div>
-      <div class="sheet-header"><div><p class="overline">PLANNING</p><h2 id="eventModalTitle">Activiteit</h2></div><button class="sheet-close" data-close-modal="eventModal" type="button" aria-label="Sluiten">×</button></div>
-      <form id="eventForm" class="sheet-form">
-        <label class="field"><span>Activiteit</span><input id="eventTitle" placeholder="Boot huren" required></label>
-        <label class="field"><span>Dag</span><select id="eventDay" required></select></label>
-        <div class="two-columns">
-          <label class="field"><span>Van</span><input id="eventStart" type="time" required></label>
-          <label class="field"><span>Tot</span><input id="eventEnd" type="time" required></label>
+  <div class="sheet-backdrop hidden" id="planSheet">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="planSheetTitle">
+      <div class="grabber"></div>
+      <header><button class="text-button" data-close>Cancel</button><h3 id="planSheetTitle">Add plan</h3><button class="text-button strong" form="planForm">Save</button></header>
+      <form id="planForm">
+        <label><span>What are you doing?</span><input id="planTitle" required placeholder="Boat day"></label>
+        <div class="two-col">
+          <label><span>Start</span><input id="planTime" type="time" required></label>
+          <label><span>End</span><input id="planEnd" type="time"></label>
         </div>
-        <label class="field"><span>Locatie</span><input id="eventLocation" placeholder="Laganas"></label>
-        <label class="field"><span>Notitie</span><textarea id="eventDescription" placeholder="Extra informatie"></textarea></label>
-        <button class="primary-action" type="submit">Toevoegen</button>
+        <label><span>Day</span><select id="planDay"></select></label>
+        <label><span>Location</span><input id="planLocation" placeholder="Laganas"></label>
+        <label><span>Notes</span><textarea id="planNotes" placeholder="Anything worth remembering"></textarea></label>
       </form>
-    </div>
+    </section>
   </div>
 
-  <div id="ideaModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ideaModalTitle">
-    <div class="sheet"><div class="sheet-handle"></div>
-      <div class="sheet-header"><div><p class="overline">IDEE</p><h2 id="ideaModalTitle">Nieuw idee</h2></div><button class="sheet-close" data-close-modal="ideaModal" type="button" aria-label="Sluiten">×</button></div>
-      <form id="ideaForm" class="sheet-form">
-        <label class="field"><span>Idee</span><input id="ideaTitle" placeholder="Jetski huren" required></label>
-        <label class="field"><span>Dag</span><select id="ideaDay" required></select></label>
-        <label class="field"><span>Notitie</span><textarea id="ideaDescription" placeholder="Wat wil je doen?"></textarea></label>
-        <button class="primary-action" type="submit">Toevoegen</button>
+  <div class="sheet-backdrop hidden" id="ideaSheet">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="ideaSheetTitle">
+      <div class="grabber"></div>
+      <header><button class="text-button" data-close>Cancel</button><h3 id="ideaSheetTitle">New idea</h3><button class="text-button strong" form="ideaForm">Save</button></header>
+      <form id="ideaForm">
+        <label><span>Idea</span><input id="ideaTitle" required placeholder="Rent jetskis"></label>
+        <label><span>Note</span><textarea id="ideaNote" placeholder="Optional"></textarea></label>
       </form>
-    </div>
+    </section>
   </div>
 
-  <div id="expenseModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="expenseModalTitle">
-    <div class="sheet"><div class="sheet-handle"></div>
-      <div class="sheet-header"><div><p class="overline">BUDGET</p><h2 id="expenseModalTitle">Nieuwe uitgave</h2></div><button class="sheet-close" data-close-modal="expenseModal" type="button" aria-label="Sluiten">×</button></div>
-      <form id="expenseForm" class="sheet-form">
-        <label class="field"><span>Waarvoor?</span><input id="expenseTitle" placeholder="Boot" required></label>
-        <label class="field"><span>Bedrag</span><input id="expenseAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" required></label>
-        <button class="primary-action" type="submit">Opslaan</button>
+  <div class="sheet-backdrop hidden" id="packingSheet">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="packingSheetTitle">
+      <div class="grabber"></div>
+      <header><button class="text-button" data-close>Cancel</button><h3 id="packingSheetTitle">Add item</h3><button class="text-button strong" form="packingForm">Save</button></header>
+      <form id="packingForm">
+        <label><span>Item</span><input id="packingText" required placeholder="Sunscreen"></label>
       </form>
-    </div>
-  </div>
-
-  <div id="packingModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="packingModalTitle">
-    <div class="sheet"><div class="sheet-handle"></div>
-      <div class="sheet-header"><div><p class="overline">PACKING</p><h2 id="packingModalTitle">Nieuw item</h2></div><button class="sheet-close" data-close-modal="packingModal" type="button" aria-label="Sluiten">×</button></div>
-      <form id="packingForm" class="sheet-form">
-        <label class="field"><span>Wat moet mee?</span><input id="packingText" placeholder="Zonnebrand" required></label>
-        <button class="primary-action" type="submit">Toevoegen</button>
-      </form>
-    </div>
-  </div>
-
-  <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-    <div class="sheet settings-sheet"><div class="sheet-handle"></div>
-      <div class="sheet-header"><div><p class="overline">ZANTE 2027</p><h2 id="settingsTitle">Instellingen</h2></div><button class="sheet-close" data-close-modal="settingsModal" type="button" aria-label="Sluiten">×</button></div>
-      <section class="profile-summary">
-        <div id="settingsAvatar" class="settings-avatar">N</div>
-        <div><strong id="profileName">Naam</strong><span id="profileRole">Reisgenoot</span></div>
-      </section>
-      <div class="settings-actions"><button id="settingsShareButton" class="settings-row" type="button"><span>Deel room key</span><span class="row-arrow">↗</span></button></div>
-      <section id="adminSection" class="admin-section hidden"><p class="settings-label">Groepsbeheer</p><div id="adminMembers" class="settings-list"></div></section>
-      <button id="settingsLogoutButton" class="logout-row" type="button">Room verlaten</button>
-    </div>
+    </section>
   </div>
 </body>
 </html>
