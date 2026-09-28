@@ -76,9 +76,34 @@
       button.addEventListener("click", () => changeTab(button.dataset.tab, button));
     });
 
-    $("shareRoomButton").addEventListener("click", shareRoom);
-    $("logoutButton").addEventListener("click", logout);
-    $("profileButton").addEventListener("click", logout);
+    $("settingsShareButton").addEventListener("click", shareRoom);
+    $("settingsLogoutButton").addEventListener("click", logout);
+    $("profileButton").addEventListener("click", () => {
+      renderMembers();
+      openModal("settingsModal");
+    });
+
+    window.addEventListener("resize", () => {
+      const active = document.querySelector(".nav-button.active");
+      if (active) updateLiquidDock(active, false);
+    });
+  }
+
+  function updateLiquidDock(button, animate = true) {
+    const dock = $("tabbar");
+    const indicator = $("liquidIndicator");
+    if (!dock || !indicator || !button) return;
+
+    const dockRect = dock.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
+    dock.style.setProperty("--indicator-x", `${buttonRect.left - dockRect.left}px`);
+    dock.style.setProperty("--indicator-w", `${buttonRect.width}px`);
+
+    if (animate) {
+      indicator.classList.remove("liquid-move");
+      void indicator.offsetWidth;
+      indicator.classList.add("liquid-move");
+    }
   }
 
   function changeTab(tabId, button) {
@@ -86,6 +111,8 @@
     $(tabId).classList.add("active");
     document.querySelectorAll(".nav-button").forEach((item) => item.classList.remove("active"));
     button.classList.add("active");
+    updateLiquidDock(button);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function login(event) {
@@ -180,13 +207,14 @@
   async function openApp() {
     $("loginPage").classList.add("hidden");
     $("app").classList.remove("hidden");
-    $("username").textContent = currentMember.name;
     $("profileButton").textContent = currentMember.name.charAt(0).toUpperCase();
     $("roomName").textContent = room.name;
-    $("adminBadge").classList.toggle("hidden", !isAdmin());
+    $("profileName").textContent = currentMember.name;
+    $("settingsAvatar").textContent = currentMember.name.charAt(0).toUpperCase();
 
     renderDayControls();
     await loadEverything();
+    requestAnimationFrame(() => updateLiquidDock(document.querySelector(".nav-button.active"), false));
     startRealtime();
   }
 
@@ -213,7 +241,10 @@
       packingItems = packingRes.data || [];
 
       currentMember = members.find((member) => member.id === currentMember.id) || currentMember;
-      $("adminBadge").classList.toggle("hidden", !isAdmin());
+      $("profileName").textContent = currentMember.name;
+      $("settingsAvatar").textContent = currentMember.name.charAt(0).toUpperCase();
+      $("profileRole").textContent = isAdmin() ? "Admin" : "Reisgenoot";
+      $("adminSection").classList.toggle("hidden", !isAdmin());
 
       renderEverything();
     } catch (error) {
@@ -276,15 +307,10 @@
 
   function renderEverything() {
     renderEvents();
-    renderMembers();
     renderIdeas();
     renderExpenses();
     renderPacking();
-
-    $("eventCount").textContent = events.length;
-    $("ideaCount").textContent = ideas.length;
-    $("memberCount").textContent = members.length;
-    $("adminCount").textContent = members.filter((member) => member.is_admin).length;
+    if (isAdmin()) renderMembers();
   }
 
   function renderEvents() {
@@ -305,7 +331,6 @@
             <div class="event-title">${escapeHtml(event.title)}</div>
             ${event.location ? `<div class="event-meta">📍 ${escapeHtml(event.location)}</div>` : ""}
             ${event.description ? `<div class="event-meta">${escapeHtml(event.description)}</div>` : ""}
-            <div class="creator">Toegevoegd door ${escapeHtml(memberName(event.created_by))}</div>
           </div>
           ${canDelete(event.created_by) ? `<button class="delete-button" data-delete-event="${event.id}">Verwijder</button>` : ""}
         </div>
@@ -318,7 +343,12 @@
   }
 
   function renderMembers() {
-    $("members").innerHTML = members.map((member) => {
+    if (!isAdmin()) {
+      $("adminMembers").innerHTML = "";
+      return;
+    }
+
+    $("adminMembers").innerHTML = members.map((member) => {
       const current = member.id === currentMember.id;
       const protectedAdmin = isNate(member);
       const adminControls = isAdmin() && !current && !protectedAdmin
@@ -363,7 +393,7 @@
             <div class="idea-top">
               <div>
                 <div class="idea-title">${escapeHtml(idea.title)}</div>
-                <div class="idea-meta">${DAYS[idea.day]} · door ${escapeHtml(memberName(idea.created_by))}</div>
+                <div class="idea-meta">${DAYS[idea.day]}</div>
                 ${idea.description ? `<div class="idea-meta">${escapeHtml(idea.description)}</div>` : ""}
               </div>
               ${canDelete(idea.created_by) ? `<button class="delete-button" data-delete-idea="${idea.id}">Verwijder</button>` : ""}
