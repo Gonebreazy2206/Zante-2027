@@ -16,12 +16,12 @@
       <div class="app-icon">Z</div>
       <div class="eyebrow">SHARED TRIP</div>
       <h1>Zante 2027</h1>
-      <p>Vul je naam en room key in. Daarna zie je direct dezelfde planning, stemmen, kosten en packing list als de rest.</p>
+      <p>Vul je naam en room key in. Daarna zie je dezelfde planning, ideeën, kosten en packing list als de rest.</p>
 
       <form id="loginForm" class="stack">
         <div>
           <label for="nameInput">Jouw naam</label>
-          <input id="nameInput" autocomplete="name" placeholder="Bijv. Nathan" required>
+          <input id="nameInput" autocomplete="name" placeholder="Bijv. Nate" required>
         </div>
         <div>
           <label for="roomKeyInput">Room key</label>
@@ -50,6 +50,7 @@
       </nav>
 
       <div class="profile">
+        <span id="adminBadge" class="admin-badge hidden">Admin</span>
         <span id="username" class="username"></span>
         <button id="profileButton" class="avatar" type="button" title="Room verlaten">N</button>
       </div>
@@ -61,16 +62,16 @@
           <div>
             <div class="eyebrow">ZANTE 2027</div>
             <h1>Onze vakantie.</h1>
-            <p>Plan, stem en beslis samen zonder losse WhatsApp-lijstjes.</p>
+            <p>Alles wat we gaan doen op één plek.</p>
           </div>
           <button class="button button-primary" data-open-modal="eventModal">+ Activiteit</button>
         </div>
 
         <div class="stats-grid">
           <article class="stat-card"><span>Activiteiten</span><strong id="eventCount">0</strong></article>
-          <article class="stat-card"><span>Eventstemmen</span><strong id="eventVoteCount">0</strong></article>
           <article class="stat-card"><span>Ideeën</span><strong id="ideaCount">0</strong></article>
           <article class="stat-card"><span>Vrienden</span><strong id="memberCount">0</strong></article>
+          <article class="stat-card"><span>Admins</span><strong id="adminCount">0</strong></article>
         </div>
 
         <div class="main-grid">
@@ -86,12 +87,6 @@
           </article>
 
           <aside class="sidebar-stack">
-            <article class="card">
-              <div class="section-kicker">Ranking</div>
-              <h2>Populair vandaag</h2>
-              <div id="popularEvents"></div>
-            </article>
-
             <article class="card">
               <div class="section-kicker">Groep</div>
               <h2>Reisgenoten</h2>
@@ -110,13 +105,11 @@
           <div>
             <div class="eyebrow">IDEEËN</div>
             <h1>Wat zullen we doen?</h1>
-            <p>Voeg ideeën toe en stem direct op wat jij goed vindt.</p>
+            <p>Iedereen kan ideeën toevoegen voor de reis.</p>
           </div>
           <button class="button button-primary" data-open-modal="ideaModal">+ Idee</button>
         </div>
-        <article class="card">
-          <div id="ideasList"></div>
-        </article>
+        <article class="card"><div id="ideasList"></div></article>
       </section>
 
       <section id="budget" class="page-section">
@@ -151,9 +144,7 @@
           </div>
           <button class="button button-primary" data-open-modal="packingModal">+ Item</button>
         </div>
-        <article class="card">
-          <div id="packingList"></div>
-        </article>
+        <article class="card"><div id="packingList"></div></article>
       </section>
     </main>
   </div>
