@@ -6,7 +6,8 @@
     {name:"Thursday",short:"Thu",date:22},
     {name:"Friday",short:"Fri",date:23},
     {name:"Saturday",short:"Sat",date:24},
-    {name:"Sunday",short:"Sun",date:25}
+    {name:"Sunday",short:"Sun",date:25},
+    {name:"Monday",short:"Mon",date:26}
   ];
   const KEY="zantePlannerV1";
   const state=Object.assign({selectedDay:0,plans:[],ideas:[],packing:[]},JSON.parse(localStorage.getItem(KEY)||"{}"));
@@ -20,7 +21,7 @@
     document.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{state.selectedDay=Number(b.dataset.day);save();render();});
     const d=DAYS[state.selectedDay];
     $("selectedDate").textContent=`${d.name.toUpperCase()} · ${d.date} JULY`;
-    $("selectedDayTitle").textContent=`Day ${state.selectedDay+1}`;
+    $("selectedDayTitle").textContent=state.selectedDay===7?"Departure":`Day ${state.selectedDay+1}`;
     $("planDay").value=state.selectedDay;
   }
 
