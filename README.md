@@ -7,17 +7,18 @@ Gedeelde vakantieplanner voor een vriendengroep.
 - Naam + room key login
 - Gedeelde planning per dag
 - Events met begin- en eindtijd
-- Direct stemmen op events in de planning
-- Ideeën + aparte stemmen
-- Ranking van populairste events per dag
+- Ideeën per dag
 - Gezamenlijke uitgaven
 - Gedeelde packing list
+- Adminrollen
+- Nate is automatisch hoofd-admin
+- Admins kunnen leden beheren en alle content verwijderen
 - Live synchronisatie via Supabase Realtime
 
 ## Projectstructuur
 
 ```text
-zante-2027/
+Zante-2027/
 ├─ index.html
 ├─ css/
 │  └─ styles.css
@@ -25,20 +26,23 @@ zante-2027/
 │  ├─ config.js
 │  └─ app.js
 ├─ sql/
-│  └─ schema.sql
-├─ assets/
+│  ├─ schema.sql
+│  └─ migrate-admin-no-votes.sql
 ├─ .gitignore
 └─ README.md
 ```
 
+## Database bijwerken
+
+Als je de database al had aangemaakt vóór de admin-update:
+
+1. Open Supabase → SQL Editor.
+2. Run `sql/migrate-admin-no-votes.sql`.
+
+Voor een nieuwe database kun je direct `sql/schema.sql` uitvoeren.
+
 ## Starten
 
-Open `index.html` met VS Code Live Server of serve de map met een simpele lokale webserver.
-
-## Supabase
-
-1. Open Supabase SQL Editor.
-2. Run `sql/schema.sql`.
-3. Controleer `js/config.js` voor de Supabase URL en publishable key.
+Open `index.html` met VS Code Live Server of serve de map met een lokale webserver.
 
 Gebruik nooit een Supabase secret/service-role key in frontendcode.
