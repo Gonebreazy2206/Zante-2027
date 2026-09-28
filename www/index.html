@@ -41,14 +41,6 @@
         <div class="brand-icon">Z</div>
         <span id="roomName">Zante 2027</span>
       </div>
-
-      <nav class="segmented" aria-label="Hoofdnavigatie">
-        <button class="nav-button active" data-tab="planning">Planning</button>
-        <button class="nav-button" data-tab="ideas">Ideeën</button>
-        <button class="nav-button" data-tab="budget">Budget</button>
-        <button class="nav-button" data-tab="packing">Packing</button>
-      </nav>
-
       <div class="profile">
         <span id="adminBadge" class="admin-badge hidden">Admin</span>
         <span id="username" class="username"></span>
@@ -61,8 +53,8 @@
         <div class="hero">
           <div>
             <div class="eyebrow">ZANTE 2027</div>
-            <h1>Onze vakantie.</h1>
-            <p>Alles wat we gaan doen op één plek.</p>
+            <h1>Planning</h1>
+            <p>Zante 2027 · 7 dagen samen</p>
           </div>
           <button class="button button-primary" data-open-modal="eventModal">+ Activiteit</button>
         </div>
@@ -104,7 +96,7 @@
         <div class="hero">
           <div>
             <div class="eyebrow">IDEEËN</div>
-            <h1>Wat zullen we doen?</h1>
+            <h1>Ideeën</h1>
             <p>Iedereen kan ideeën toevoegen voor de reis.</p>
           </div>
           <button class="button button-primary" data-open-modal="ideaModal">+ Idee</button>
@@ -116,7 +108,7 @@
         <div class="hero">
           <div>
             <div class="eyebrow">GELD</div>
-            <h1>Gezamenlijk budget.</h1>
+            <h1>Budget</h1>
             <p>Zie wat er is uitgegeven en wie iets heeft betaald.</p>
           </div>
           <button class="button button-primary" data-open-modal="expenseModal">+ Uitgave</button>
@@ -139,7 +131,7 @@
         <div class="hero">
           <div>
             <div class="eyebrow">PACKING</div>
-            <h1>Niet vergeten.</h1>
+            <h1>Packing</h1>
             <p>Één gedeelde lijst die iedereen kan afvinken.</p>
           </div>
           <button class="button button-primary" data-open-modal="packingModal">+ Item</button>
@@ -147,6 +139,24 @@
         <article class="card"><div id="packingList"></div></article>
       </section>
     </main>
+    <nav class="tabbar" aria-label="Hoofdnavigatie">
+      <button class="nav-button active" data-tab="planning" type="button" aria-label="Planning">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v12H4V7a2 2 0 0 1 2-2Z"/></svg>
+        <span>Planning</span>
+      </button>
+      <button class="nav-button" data-tab="ideas" type="button" aria-label="Ideeën">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 22h4M8.2 15.5A7 7 0 1 1 15.8 15.5C14.7 16.3 14 17 14 18h-4c0-1-.7-1.7-1.8-2.5Z"/></svg>
+        <span>Ideeën</span>
+      </button>
+      <button class="nav-button" data-tab="budget" type="button" aria-label="Budget">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h16v11H4zM4 10h16M16 15h1"/></svg>
+        <span>Budget</span>
+      </button>
+      <button class="nav-button" data-tab="packing" type="button" aria-label="Packing">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M5 7h14v14H5zM9 7v14M15 7v14"/></svg>
+        <span>Packing</span>
+      </button>
+    </nav>
   </div>
 
   <div id="eventModal" class="modal hidden" role="dialog" aria-modal="true">
