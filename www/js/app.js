@@ -181,7 +181,7 @@
     $("loginPage").classList.add("hidden");
     $("app").classList.remove("hidden");
     $("username").textContent = currentMember.name;
-    $("avatar").textContent = currentMember.name.charAt(0).toUpperCase();
+    $("profileButton").textContent = currentMember.name.charAt(0).toUpperCase();
     $("roomName").textContent = room.name;
     $("adminBadge").classList.toggle("hidden", !isAdmin());
 
