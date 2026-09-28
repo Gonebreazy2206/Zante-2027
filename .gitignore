@@ -1,5 +1,14 @@
+node_modules/
 .DS_Store
-.vscode/
+*.log
 .env
 .env.*
-node_modules/
+!.env.example
+
+# Capacitor generated web copy inside native project
+ios/App/App/public/
+
+# Xcode
+DerivedData/
+*.xcuserstate
+xcuserdata/
