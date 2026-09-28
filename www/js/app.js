@@ -1,646 +1,82 @@
 (() => {
-  const DAYS = ["Dag 1", "Dag 2", "Dag 3", "Dag 4", "Dag 5", "Dag 6", "Dag 7"];
-  const SESSION_KEY = "zanteSession";
-  let db;
-  let room = null;
-  let currentMember = null;
-  let selectedDay = 0;
-  let members = [];
-  let events = [];
-  let ideas = [];
-  let expenses = [];
-  let packingItems = [];
-  let realtimeChannel = null;
-  let reloadTimer = null;
+  const DAYS = [
+    {name:"Monday",short:"Mon",date:19},
+    {name:"Tuesday",short:"Tue",date:20},
+    {name:"Wednesday",short:"Wed",date:21},
+    {name:"Thursday",short:"Thu",date:22},
+    {name:"Friday",short:"Fri",date:23},
+    {name:"Saturday",short:"Sat",date:24},
+    {name:"Sunday",short:"Sun",date:25}
+  ];
+  const KEY="zantePlannerV1";
+  const state=Object.assign({selectedDay:0,plans:[],ideas:[],packing:[]},JSON.parse(localStorage.getItem(KEY)||"{}"));
+  const $=id=>document.getElementById(id);
+  const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+  const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
+  const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 
-  const $ = (id) => document.getElementById(id);
-
-  function escapeHtml(value = "") {
-    return String(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+  function renderDays(){
+    $("dayStrip").innerHTML=DAYS.map((d,i)=>`<button class="day-chip ${i===state.selectedDay?"active":""}" data-day="${i}" aria-label="${d.name} ${d.date} July"><small>${d.short}</small><strong>${d.date}</strong></button>`).join("");
+    document.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{state.selectedDay=Number(b.dataset.day);save();render();});
+    const d=DAYS[state.selectedDay];
+    $("selectedDate").textContent=`${d.name.toUpperCase()} · ${d.date} JULY`;
+    $("selectedDayTitle").textContent=`Day ${state.selectedDay+1}`;
+    $("planDay").value=state.selectedDay;
   }
 
-  function toast(message) {
-    document.querySelector(".toast")?.remove();
-    const element = document.createElement("div");
-    element.className = "toast";
-    element.textContent = message;
-    document.body.appendChild(element);
-    setTimeout(() => element.remove(), 2200);
+  function renderPlans(){
+    const plans=state.plans.filter(p=>p.day===state.selectedDay).sort((a,b)=>a.time.localeCompare(b.time));
+    $("planCount").textContent=`${plans.length} ${plans.length===1?"plan":"plans"}`;
+    $("plansList").innerHTML=plans.length?plans.map(p=>`
+      <article class="plan-row">
+        <div class="time"><strong>${esc(p.time)}</strong>${p.end?`<span>to ${esc(p.end)}</span>`:""}</div>
+        <div class="plan-main"><strong>${esc(p.title)}</strong>${p.location?`<div class="meta">${esc(p.location)}</div>`:""}${p.notes?`<div class="meta">${esc(p.notes)}</div>`:""}</div>
+        <button class="delete" data-delete-plan="${p.id}" aria-label="Delete ${esc(p.title)}">×</button>
+      </article>`).join(""):`<div class="empty"><strong>Nothing planned yet</strong><span>Tap + to add the first thing for this day.</span></div>`;
+    document.querySelectorAll("[data-delete-plan]").forEach(b=>b.onclick=()=>{state.plans=state.plans.filter(p=>p.id!==b.dataset.deletePlan);save();renderPlans();});
   }
 
-  function isAdmin() {
-    return Boolean(currentMember?.is_admin);
+  function renderIdeas(){
+    $("ideasList").innerHTML=state.ideas.length?state.ideas.map(i=>`<div class="idea-row"><div class="idea-main"><strong>${esc(i.title)}</strong>${i.note?`<span>${esc(i.note)}</span>`:""}</div><button class="delete" data-delete-idea="${i.id}" aria-label="Delete idea">×</button></div>`).join(""):`<div class="empty"><strong>No ideas saved</strong><span>Add places, restaurants or things you might want to do.</span></div>`;
+    document.querySelectorAll("[data-delete-idea]").forEach(b=>b.onclick=()=>{state.ideas=state.ideas.filter(i=>i.id!==b.dataset.deleteIdea);save();renderIdeas();});
   }
 
-  function isNate(member) {
-    return member?.name?.trim().toLowerCase() === "nate";
+  function renderPacking(){
+    const done=state.packing.filter(i=>i.done).length,total=state.packing.length;
+    $("packingProgress").textContent=`${done} of ${total} packed`;
+    $("progressBar").style.width=total?`${done/total*100}%`:"0%";
+    $("packingList").innerHTML=total?state.packing.map(i=>`<div class="packing-row ${i.done?"done":""}"><button class="packing-toggle" data-toggle-pack="${i.id}"><span class="check"></span><span class="packing-text">${esc(i.text)}</span></button><button class="delete" data-delete-pack="${i.id}" aria-label="Delete item">×</button></div>`).join(""):`<div class="empty"><strong>Your bag is empty</strong><span>Add the things you don’t want to forget.</span></div>`;
+    document.querySelectorAll("[data-toggle-pack]").forEach(b=>b.onclick=()=>{const x=state.packing.find(i=>i.id===b.dataset.togglePack);if(x)x.done=!x.done;save();renderPacking();});
+    document.querySelectorAll("[data-delete-pack]").forEach(b=>b.onclick=()=>{state.packing=state.packing.filter(i=>i.id!==b.dataset.deletePack);save();renderPacking();});
   }
 
-  function canDelete(createdBy) {
-    return isAdmin() || createdBy === currentMember?.id;
+  function render(){renderDays();renderPlans();renderIdeas();renderPacking();}
+
+  function openSheet(id){
+    const el=$(id);el.classList.remove("hidden");document.body.style.overflow="hidden";
+    requestAnimationFrame(()=>el.querySelector("input,select,textarea")?.focus());
   }
-
-  function memberName(memberId) {
-    return members.find((member) => member.id === memberId)?.name || "Onbekend";
-  }
-
-  function openModal(id) {
-    $(id)?.classList.remove("hidden");
-  }
-
-  function closeModal(id) {
-    $(id)?.classList.add("hidden");
-  }
-
-  function setupStaticUi() {
-    document.querySelectorAll("[data-open-modal]").forEach((button) => {
-      button.addEventListener("click", () => openModal(button.dataset.openModal));
-    });
-
-    document.querySelectorAll("[data-close-modal]").forEach((button) => {
-      button.addEventListener("click", () => closeModal(button.dataset.closeModal));
-    });
-
-    document.querySelectorAll(".modal").forEach((modal) => {
-      modal.addEventListener("click", (event) => {
-        if (event.target === modal) closeModal(modal.id);
-      });
-    });
-
-    document.querySelectorAll(".nav-button").forEach((button) => {
-      button.addEventListener("click", () => changeTab(button.dataset.tab, button));
-    });
-
-    $("settingsShareButton").addEventListener("click", shareRoom);
-    $("settingsLogoutButton").addEventListener("click", logout);
-    $("profileButton").addEventListener("click", () => {
-      renderMembers();
-      openModal("settingsModal");
-    });
-
-    window.addEventListener("resize", () => {
-      const active = document.querySelector(".nav-button.active");
-      if (active) updateLiquidDock(active, false);
-    });
-  }
-
-  function updateLiquidDock(button, animate = true) {
-    const dock = $("tabbar");
-    const indicator = $("liquidIndicator");
-    if (!dock || !indicator || !button) return;
-
-    const dockRect = dock.getBoundingClientRect();
-    const buttonRect = button.getBoundingClientRect();
-    dock.style.setProperty("--indicator-x", `${buttonRect.left - dockRect.left}px`);
-    dock.style.setProperty("--indicator-w", `${buttonRect.width}px`);
-
-    if (animate) {
-      indicator.classList.remove("liquid-move");
-      void indicator.offsetWidth;
-      indicator.classList.add("liquid-move");
-    }
-  }
-
-  function changeTab(tabId, button) {
-    document.querySelectorAll(".page-section").forEach((section) => section.classList.remove("active"));
-    $(tabId).classList.add("active");
-    document.querySelectorAll(".nav-button").forEach((item) => item.classList.remove("active"));
-    button.classList.add("active");
-    updateLiquidDock(button);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  async function login(event) {
-    event.preventDefault();
-
-    const errorBox = $("loginError");
-    const button = $("loginButton");
-    const name = $("nameInput").value.trim();
-    const roomKey = $("roomKeyInput").value.trim();
-
-    errorBox.classList.add("hidden");
-    button.disabled = true;
-    button.textContent = "Verbinden...";
-
-    try {
-      const { data: roomData, error: roomError } = await db
-        .from("rooms")
-        .select("id,name")
-        .eq("room_key", roomKey)
-        .maybeSingle();
-
-      if (roomError || !roomData) throw new Error("Room key klopt niet.");
-
-      room = roomData;
-
-      let { data: memberData, error: memberError } = await db
-        .from("members")
-        .select("*")
-        .eq("room_id", room.id)
-        .ilike("name", name)
-        .maybeSingle();
-
-      if (memberError) throw memberError;
-
-      if (!memberData) {
-        const { data, error } = await db
-          .from("members")
-          .insert({
-            room_id: room.id,
-            name,
-            is_admin: name.toLowerCase() === "nate"
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-        memberData = data;
-      }
-
-      currentMember = memberData;
-
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-        roomId: room.id,
-        roomName: room.name,
-        memberId: currentMember.id,
-        memberName: currentMember.name,
-        roomKey
-      }));
-
-      await openApp();
-    } catch (error) {
-      console.error(error);
-      errorBox.textContent = error.message || "Er ging iets mis.";
-      errorBox.classList.remove("hidden");
-    } finally {
-      button.disabled = false;
-      button.textContent = "Open vakantie";
-    }
-  }
-
-  async function restoreSession() {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    if (!raw) return;
-
-    try {
-      const saved = JSON.parse(raw);
-      const [{ data: roomData }, { data: memberData }] = await Promise.all([
-        db.from("rooms").select("id,name").eq("id", saved.roomId).maybeSingle(),
-        db.from("members").select("*").eq("id", saved.memberId).maybeSingle()
-      ]);
-
-      if (!roomData || !memberData) return;
-
-      room = roomData;
-      currentMember = memberData;
-      await openApp();
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  async function openApp() {
-    $("loginPage").classList.add("hidden");
-    $("app").classList.remove("hidden");
-    $("profileButton").textContent = currentMember.name.charAt(0).toUpperCase();
-    $("roomName").textContent = room.name;
-    $("profileName").textContent = currentMember.name;
-    $("settingsAvatar").textContent = currentMember.name.charAt(0).toUpperCase();
-
-    renderDayControls();
-    await loadEverything();
-    requestAnimationFrame(() => updateLiquidDock(document.querySelector(".nav-button.active"), false));
-    startRealtime();
-  }
-
-  async function loadEverything() {
-    if (!room) return;
-
-    try {
-      const [membersRes, eventsRes, ideasRes, expensesRes, packingRes] = await Promise.all([
-        db.from("members").select("*").eq("room_id", room.id).order("created_at"),
-        db.from("events").select("*").eq("room_id", room.id).order("start_time"),
-        db.from("ideas").select("*").eq("room_id", room.id).order("created_at", { ascending: false }),
-        db.from("expenses").select("*").eq("room_id", room.id).order("created_at", { ascending: false }),
-        db.from("packing_items").select("*").eq("room_id", room.id).order("created_at")
-      ]);
-
-      [membersRes, eventsRes, ideasRes, expensesRes, packingRes].forEach((response) => {
-        if (response.error) throw response.error;
-      });
-
-      members = membersRes.data || [];
-      events = eventsRes.data || [];
-      ideas = ideasRes.data || [];
-      expenses = expensesRes.data || [];
-      packingItems = packingRes.data || [];
-
-      currentMember = members.find((member) => member.id === currentMember.id) || currentMember;
-      $("profileName").textContent = currentMember.name;
-      $("settingsAvatar").textContent = currentMember.name.charAt(0).toUpperCase();
-      $("profileRole").textContent = isAdmin() ? "Admin" : "Reisgenoot";
-      $("adminSection").classList.toggle("hidden", !isAdmin());
-
-      renderEverything();
-    } catch (error) {
-      console.error("Load error:", error);
-      toast("Kon data niet laden");
-    }
-  }
-
-  function startRealtime() {
-    if (realtimeChannel) db.removeChannel(realtimeChannel);
-
-    realtimeChannel = db.channel(`zante-${room.id}`);
-
-    ["members", "events", "ideas", "expenses", "packing_items"].forEach((table) => {
-      realtimeChannel.on("postgres_changes", { event: "*", schema: "public", table }, scheduleReload);
-    });
-
-    realtimeChannel.subscribe();
-  }
-
-  function scheduleReload() {
-    clearTimeout(reloadTimer);
-    reloadTimer = setTimeout(loadEverything, 200);
-  }
-
-  function renderDayControls() {
-    const tabs = $("dayTabs");
-    const eventDay = $("eventDay");
-    const ideaDay = $("ideaDay");
-
-    tabs.innerHTML = "";
-    eventDay.innerHTML = "";
-    ideaDay.innerHTML = "";
-
-    DAYS.forEach((day, index) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = `day-tab${selectedDay === index ? " active" : ""}`;
-      button.textContent = day;
-
-      button.addEventListener("click", () => {
-        selectedDay = index;
-        renderDayControls();
-        renderEvents();
-      });
-
-      tabs.appendChild(button);
-
-      [eventDay, ideaDay].forEach((select) => {
-        const option = document.createElement("option");
-        option.value = index;
-        option.textContent = day;
-        select.appendChild(option);
-      });
-    });
-
-    eventDay.value = selectedDay;
-    ideaDay.value = selectedDay;
-  }
-
-  function renderEverything() {
-    renderEvents();
-    renderIdeas();
-    renderExpenses();
-    renderPacking();
-    if (isAdmin()) renderMembers();
-  }
-
-  function renderEvents() {
-    const list = events
-      .filter((item) => item.day === selectedDay)
-      .sort((a, b) => String(a.start_time).localeCompare(String(b.start_time)));
-
-    if (!list.length) {
-      $("events").innerHTML = `<div class="empty">Nog niets gepland voor ${DAYS[selectedDay]}.</div>`;
-      return;
-    }
-
-    $("events").innerHTML = list.map((event) => `
-      <article class="event-card">
-        <div class="event-top">
-          <div>
-            <div class="event-time">${escapeHtml(String(event.start_time).slice(0,5))} — ${escapeHtml(String(event.end_time).slice(0,5))}</div>
-            <div class="event-title">${escapeHtml(event.title)}</div>
-            ${event.location ? `<div class="event-meta">📍 ${escapeHtml(event.location)}</div>` : ""}
-            ${event.description ? `<div class="event-meta">${escapeHtml(event.description)}</div>` : ""}
-          </div>
-          ${canDelete(event.created_by) ? `<button class="delete-button" data-delete-event="${event.id}">Verwijder</button>` : ""}
-        </div>
-      </article>
-    `).join("");
-
-    document.querySelectorAll("[data-delete-event]").forEach((button) => {
-      button.addEventListener("click", () => deleteRow("events", Number(button.dataset.deleteEvent), "Activiteit verwijderd"));
-    });
-  }
-
-  function renderMembers() {
-    if (!isAdmin()) {
-      $("adminMembers").innerHTML = "";
-      return;
-    }
-
-    $("adminMembers").innerHTML = members.map((member) => {
-      const current = member.id === currentMember.id;
-      const protectedAdmin = isNate(member);
-      const adminControls = isAdmin() && !current && !protectedAdmin
-        ? `
-          <div class="member-actions">
-            <button class="mini-button" data-toggle-admin="${member.id}">
-              ${member.is_admin ? "Admin verwijderen" : "Maak admin"}
-            </button>
-            <button class="mini-button danger-mini" data-remove-member="${member.id}">Verwijder</button>
-          </div>
-        `
-        : "";
-
-      return `
-        <div class="member-row member-row-admin">
-          <div class="member-avatar">${escapeHtml(member.name.charAt(0).toUpperCase())}</div>
-          <div class="member-main">
-            <div class="member-name">
-              ${escapeHtml(member.name)}
-              ${member.is_admin ? '<span class="admin-pill">Admin</span>' : ""}
-              ${current ? '<span class="you">· jij</span>' : ""}
-            </div>
-            ${adminControls}
-          </div>
-        </div>
-      `;
-    }).join("");
-
-    document.querySelectorAll("[data-toggle-admin]").forEach((button) => {
-      button.addEventListener("click", () => toggleAdmin(Number(button.dataset.toggleAdmin)));
-    });
-
-    document.querySelectorAll("[data-remove-member]").forEach((button) => {
-      button.addEventListener("click", () => removeMember(Number(button.dataset.removeMember)));
-    });
-  }
-
-  function renderIdeas() {
-    $("ideasList").innerHTML = ideas.length
-      ? ideas.map((idea) => `
-          <article class="idea-card">
-            <div class="idea-top">
-              <div>
-                <div class="idea-title">${escapeHtml(idea.title)}</div>
-                <div class="idea-meta">${DAYS[idea.day]}</div>
-                ${idea.description ? `<div class="idea-meta">${escapeHtml(idea.description)}</div>` : ""}
-              </div>
-              ${canDelete(idea.created_by) ? `<button class="delete-button" data-delete-idea="${idea.id}">Verwijder</button>` : ""}
-            </div>
-          </article>
-        `).join("")
-      : '<div class="empty">Nog geen ideeën.</div>';
-
-    document.querySelectorAll("[data-delete-idea]").forEach((button) => {
-      button.addEventListener("click", () => deleteRow("ideas", Number(button.dataset.deleteIdea), "Idee verwijderd"));
-    });
-  }
-
-  function renderExpenses() {
-    $("expenses").innerHTML = expenses.length
-      ? expenses.map((expense) => `
-          <div class="expense-row">
-            <div>
-              <div class="expense-title">${escapeHtml(expense.title)}</div>
-              <div class="expense-person">${escapeHtml(memberName(expense.created_by))}</div>
-            </div>
-            <div class="expense-side">
-              <div class="expense-amount">€${Number(expense.amount).toFixed(2).replace(".", ",")}</div>
-              ${canDelete(expense.created_by) ? `<button class="delete-button" data-delete-expense="${expense.id}">Verwijder</button>` : ""}
-            </div>
-          </div>
-        `).join("")
-      : '<div class="empty">Nog geen uitgaven.</div>';
-
-    document.querySelectorAll("[data-delete-expense]").forEach((button) => {
-      button.addEventListener("click", () => deleteRow("expenses", Number(button.dataset.deleteExpense), "Uitgave verwijderd"));
-    });
-
-    const total = expenses.reduce((sum, item) => sum + Number(item.amount), 0);
-    $("budgetTotal").textContent = `€${total.toFixed(2).replace(".", ",")}`;
-  }
-
-  function renderPacking() {
-    $("packingList").innerHTML = packingItems.length
-      ? packingItems.map((item) => `
-          <div class="packing-row">
-            <label class="packing-content">
-              <input class="packing-checkbox" type="checkbox" data-packing-id="${item.id}" ${item.done ? "checked" : ""}>
-              <span class="packing-text${item.done ? " done" : ""}">${escapeHtml(item.text)}</span>
-            </label>
-            ${canDelete(item.created_by) ? `<button class="delete-button" data-delete-packing="${item.id}">Verwijder</button>` : ""}
-          </div>
-        `).join("")
-      : '<div class="empty">Nog niets op de lijst.</div>';
-
-    document.querySelectorAll("[data-packing-id]").forEach((checkbox) => {
-      checkbox.addEventListener("change", () => togglePacking(Number(checkbox.dataset.packingId), checkbox.checked));
-    });
-
-    document.querySelectorAll("[data-delete-packing]").forEach((button) => {
-      button.addEventListener("click", () => deleteRow("packing_items", Number(button.dataset.deletePacking), "Item verwijderd"));
-    });
-  }
-
-  async function addEvent(event) {
-    event.preventDefault();
-
-    const start = $("eventStart").value;
-    const end = $("eventEnd").value;
-
-    if (end <= start) return toast("Eindtijd moet later zijn dan begintijd.");
-
-    const { error } = await db.from("events").insert({
-      room_id: room.id,
-      created_by: currentMember.id,
-      title: $("eventTitle").value.trim(),
-      day: Number($("eventDay").value),
-      start_time: start,
-      end_time: end,
-      location: $("eventLocation").value.trim(),
-      description: $("eventDescription").value.trim()
-    });
-
-    if (error) return handleDbError(error, "Activiteit toevoegen mislukt");
-
-    closeModal("eventModal");
-    event.target.reset();
-    await loadEverything();
-    toast("Activiteit toegevoegd");
-  }
-
-  async function addIdea(event) {
-    event.preventDefault();
-
-    const { error } = await db.from("ideas").insert({
-      room_id: room.id,
-      created_by: currentMember.id,
-      title: $("ideaTitle").value.trim(),
-      description: $("ideaDescription").value.trim(),
-      day: Number($("ideaDay").value)
-    });
-
-    if (error) return handleDbError(error, "Idee toevoegen mislukt");
-
-    closeModal("ideaModal");
-    event.target.reset();
-    await loadEverything();
-  }
-
-  async function addExpense(event) {
-    event.preventDefault();
-
-    const { error } = await db.from("expenses").insert({
-      room_id: room.id,
-      created_by: currentMember.id,
-      title: $("expenseTitle").value.trim(),
-      amount: Number($("expenseAmount").value)
-    });
-
-    if (error) return handleDbError(error, "Uitgave toevoegen mislukt");
-
-    closeModal("expenseModal");
-    event.target.reset();
-    await loadEverything();
-  }
-
-  async function addPackingItem(event) {
-    event.preventDefault();
-
-    const { error } = await db.from("packing_items").insert({
-      room_id: room.id,
-      created_by: currentMember.id,
-      text: $("packingText").value.trim(),
-      done: false
-    });
-
-    if (error) return handleDbError(error, "Item toevoegen mislukt");
-
-    closeModal("packingModal");
-    event.target.reset();
-    await loadEverything();
-  }
-
-  async function togglePacking(id, done) {
-    const { error } = await db.from("packing_items").update({ done }).eq("id", id);
-    if (error) return handleDbError(error, "Opslaan mislukt");
-    await loadEverything();
-  }
-
-  async function deleteRow(table, id, successMessage) {
-    const itemMap = {
-      events,
-      ideas,
-      expenses,
-      packing_items: packingItems
-    };
-
-    const item = itemMap[table]?.find((row) => row.id === id);
-    if (!item || !canDelete(item.created_by)) return toast("Geen toestemming.");
-
-    const { error } = await db.from(table).delete().eq("id", id);
-    if (error) return handleDbError(error, "Verwijderen mislukt");
-
-    toast(successMessage);
-    await loadEverything();
-  }
-
-  async function toggleAdmin(memberId) {
-    if (!isAdmin()) return toast("Alleen admins kunnen dit doen.");
-
-    const target = members.find((member) => member.id === memberId);
-    if (!target || isNate(target)) return toast("Nate blijft hoofd-admin.");
-
-    const { error } = await db
-      .from("members")
-      .update({ is_admin: !target.is_admin })
-      .eq("id", memberId)
-      .eq("room_id", room.id);
-
-    if (error) return handleDbError(error, "Admin wijzigen mislukt");
-
-    await loadEverything();
-  }
-
-  async function removeMember(memberId) {
-    if (!isAdmin()) return toast("Alleen admins kunnen dit doen.");
-
-    const target = members.find((member) => member.id === memberId);
-    if (!target || target.id === currentMember.id || isNate(target)) {
-      return toast("Dit lid kan niet worden verwijderd.");
-    }
-
-    const { error } = await db
-      .from("members")
-      .delete()
-      .eq("id", memberId)
-      .eq("room_id", room.id);
-
-    if (error) return handleDbError(error, "Lid verwijderen mislukt");
-
-    await loadEverything();
-  }
-
-  function handleDbError(error, message) {
-    console.error(error);
-    toast(message);
-  }
-
-  async function shareRoom() {
-    const session = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "{}");
-    const text = `${room?.name || "Zante 2027"}\nRoom key: ${session.roomKey || ""}`;
-
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: room?.name || "Zante 2027", text });
-      } else {
-        await navigator.clipboard.writeText(text);
-        toast("Room key gekopieerd");
-      }
-    } catch (error) {
-      console.debug(error);
-    }
-  }
-
-  function logout() {
-    sessionStorage.removeItem(SESSION_KEY);
-    if (realtimeChannel) db.removeChannel(realtimeChannel);
-    location.reload();
-  }
-
-  function wireForms() {
-    $("loginForm").addEventListener("submit", login);
-    $("eventForm").addEventListener("submit", addEvent);
-    $("ideaForm").addEventListener("submit", addIdea);
-    $("expenseForm").addEventListener("submit", addExpense);
-    $("packingForm").addEventListener("submit", addPackingItem);
-  }
-
-  async function init() {
-    const config = window.APP_CONFIG;
-
-    if (!config?.SUPABASE_URL || !config?.SUPABASE_PUBLISHABLE_KEY || !window.supabase) {
-      $("loginError").textContent = "Supabase configuratie ontbreekt.";
-      $("loginError").classList.remove("hidden");
-      return;
-    }
-
-    db = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_PUBLISHABLE_KEY);
-    setupStaticUi();
-    wireForms();
-    await restoreSession();
-  }
-
-  window.addEventListener("DOMContentLoaded", init);
+  function closeSheet(el){el.classList.add("hidden");document.body.style.overflow="";}
+
+  document.querySelectorAll(".tab").forEach((tab,i)=>tab.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===tab));
+    document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===tab.dataset.view));
+    $("pageTitle").textContent=tab.dataset.title;
+    $("addButton").style.display=tab.dataset.view==="weekView"?"grid":"none";
+    $("tabIndicator").style.transform=`translateX(${i*100}%)`;
+  });
+
+  $("addButton").onclick=()=>{$("planDay").value=state.selectedDay;openSheet("planSheet");};
+  document.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>openSheet(b.dataset.open));
+  document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>closeSheet(b.closest(".sheet-backdrop")));
+  document.querySelectorAll(".sheet-backdrop").forEach(x=>x.onclick=e=>{if(e.target===x)closeSheet(x);});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"){const x=document.querySelector(".sheet-backdrop:not(.hidden)");if(x)closeSheet(x);}});
+
+  DAYS.forEach((d,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`${d.name} ${d.date} July`;$("planDay").appendChild(o);});
+
+  $("planForm").onsubmit=e=>{e.preventDefault();state.plans.push({id:uid(),title:$("planTitle").value.trim(),time:$("planTime").value,end:$("planEnd").value,day:Number($("planDay").value),location:$("planLocation").value.trim(),notes:$("planNotes").value.trim()});state.selectedDay=Number($("planDay").value);save();e.target.reset();closeSheet($("planSheet"));render();};
+  $("ideaForm").onsubmit=e=>{e.preventDefault();state.ideas.unshift({id:uid(),title:$("ideaTitle").value.trim(),note:$("ideaNote").value.trim()});save();e.target.reset();closeSheet($("ideaSheet"));renderIdeas();};
+  $("packingForm").onsubmit=e=>{e.preventDefault();state.packing.push({id:uid(),text:$("packingText").value.trim(),done:false});save();e.target.reset();closeSheet($("packingSheet"));renderPacking();};
+
+  render();
 })();
