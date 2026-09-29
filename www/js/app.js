@@ -25,6 +25,7 @@
   let documents = [];
   let expandedDocumentId = null;
   let documentUrls = new Map();
+  let dayAnimating = false;
 
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -67,26 +68,51 @@
     `;
 
     document.querySelectorAll("[data-day]").forEach(button => {
-      button.onclick = () => {
+      button.onclick = async () => {
         const nextDay = Number(button.dataset.day);
-        const carousel = document.querySelector(".day-carousel");
-        const direction = nextDay > state.selectedDay ? "slide-left" : "slide-right";
+        if (dayAnimating || nextDay === state.selectedDay) return;
 
-        if (carousel && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          carousel.classList.add(direction);
-          window.setTimeout(() => {
-            state.selectedDay = nextDay;
-            save();
-            renderDays();
-            renderPlans();
-          }, 170);
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const carousel = document.querySelector(".day-carousel");
+        const direction = nextDay > state.selectedDay ? -1 : 1;
+
+        if (!carousel || reduceMotion || typeof carousel.animate !== "function") {
+          state.selectedDay = nextDay;
+          save();
+          renderDays();
+          renderPlans();
           return;
         }
 
-        state.selectedDay = nextDay;
-        save();
-        renderDays();
-        renderPlans();
+        dayAnimating = true;
+
+        try {
+          await carousel.animate(
+            [
+              {transform:"translate3d(0,0,0)",opacity:1},
+              {transform:`translate3d(${direction * 42}px,0,0)`,opacity:.45}
+            ],
+            {duration:140,easing:"cubic-bezier(.4,0,.8,.4)",fill:"forwards"}
+          ).finished;
+
+          state.selectedDay = nextDay;
+          save();
+          renderDays();
+          renderPlans();
+
+          const incoming = document.querySelector(".day-carousel");
+          if (incoming) {
+            await incoming.animate(
+              [
+                {transform:`translate3d(${direction * -42}px,0,0)`,opacity:.45},
+                {transform:"translate3d(0,0,0)",opacity:1}
+              ],
+              {duration:220,easing:"cubic-bezier(.16,1,.3,1)"}
+            ).finished;
+          }
+        } finally {
+          dayAnimating = false;
+        }
       };
     });
 
