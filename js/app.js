@@ -82,6 +82,8 @@
 
     document.querySelectorAll("[data-delete-plan]").forEach(button => {
       button.onclick = () => {
+        const plan = state.plans.find(item => item.id === button.dataset.deletePlan);
+        if (!window.confirm(`Delete "${plan?.title || "this plan"}"?`)) return;
         state.plans = state.plans.filter(plan => plan.id !== button.dataset.deletePlan);
         save();
         renderPlans();
@@ -104,6 +106,8 @@
 
     document.querySelectorAll("[data-delete-idea]").forEach(button => {
       button.onclick = () => {
+        const idea = state.ideas.find(item => item.id === button.dataset.deleteIdea);
+        if (!window.confirm(`Delete "${idea?.title || "this idea"}"?`)) return;
         state.ideas = state.ideas.filter(idea => idea.id !== button.dataset.deleteIdea);
         save();
         renderIdeas();
@@ -141,6 +145,8 @@
 
     document.querySelectorAll("[data-delete-pack]").forEach(button => {
       button.onclick = () => {
+        const item = state.packing.find(entry => entry.id === button.dataset.deletePack);
+        if (!window.confirm(`Delete "${item?.text || "this item"}"?`)) return;
         state.packing = state.packing.filter(item => item.id !== button.dataset.deletePack);
         save();
         renderPacking();
@@ -284,6 +290,8 @@
 
     document.querySelectorAll("[data-delete-document]").forEach(button => {
       button.onclick = async () => {
+        const documentItem = documents.find(item => item.id === button.dataset.deleteDocument);
+        if (!window.confirm(`Delete "${documentItem?.title || "this document"}"?`)) return;
         await removeDocument(button.dataset.deleteDocument);
         if (expandedDocumentId === button.dataset.deleteDocument) expandedDocumentId = null;
         await loadDocuments();
