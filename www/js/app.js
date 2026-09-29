@@ -450,7 +450,10 @@
   };
 
   window.addEventListener("beforeunload", clearDocumentUrls);
-  window.addEventListener("resize", () => {\n    const activeTab = document.querySelector(".tab.active");\n    if (activeTab) $("tabIndicator").style.transform = `translateX(${activeTab.offsetLeft - 6}px)`;\n  });
+  window.addEventListener("resize", () => {
+    const activeTab = document.querySelector(".tab.active");
+    if (activeTab) $("tabIndicator").style.transform = `translateX(${activeTab.offsetLeft - 6}px)`;
+  });
 
   render();
   loadDocuments();
