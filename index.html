@@ -15,9 +15,16 @@
         <p class="eyebrow">ZAKYNTHOS · 19–26 JULY 2027</p>
         <h1 id="pageTitle">Your week</h1>
       </div>
-      <button class="icon-button" id="addButton" aria-label="Add plan">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-      </button>
+
+      <div class="top-actions">
+        <button class="stay-button" id="stayButton" type="button" aria-label="Open Airbnb options">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11.5 12 5l7 6.5V20H5z"/><path d="M9 20v-5h6v5"/></svg>
+          <span>Airbnb</span>
+        </button>
+        <button class="icon-button" id="addButton" type="button" aria-label="Add plan">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
     </header>
 
     <main>
@@ -32,6 +39,7 @@
         </section>
 
         <div class="day-strip" id="dayStrip" aria-label="Trip days"></div>
+
         <div class="day-heading">
           <div>
             <p class="eyebrow" id="selectedDate">MONDAY · 19 JULY</p>
@@ -39,13 +47,14 @@
           </div>
           <span class="count-pill" id="planCount">0 plans</span>
         </div>
+
         <div id="plansList" class="list"></div>
       </section>
 
       <section class="view" id="ideasView">
         <div class="section-heading">
           <div><p class="eyebrow">SAVE FOR LATER</p><h2>Ideas</h2></div>
-          <button class="small-add" data-open="ideaSheet">Add</button>
+          <button class="small-add" data-open="ideaSheet" type="button">Add</button>
         </div>
         <div id="ideasList" class="list"></div>
       </section>
@@ -53,26 +62,61 @@
       <section class="view" id="packingView">
         <div class="section-heading">
           <div><p class="eyebrow">BEFORE YOU GO</p><h2>Packing</h2></div>
-          <button class="small-add" data-open="packingSheet">Add</button>
+          <button class="small-add" data-open="packingSheet" type="button">Add</button>
         </div>
+
         <div class="progress-wrap">
-          <div><strong id="packingProgress">0 of 0 packed</strong><span>Tap an item when it’s in the bag.</span></div>
+          <div>
+            <strong id="packingProgress">0 of 0 packed</strong>
+            <span>Tap an item when it’s in the bag.</span>
+          </div>
           <div class="progress-track"><div id="progressBar"></div></div>
         </div>
+
         <div id="packingList" class="list"></div>
+      </section>
+
+      <section class="view" id="walletView">
+        <div class="section-heading">
+          <div><p class="eyebrow">TRIP DOCUMENTS</p><h2>Wallet</h2></div>
+          <button class="small-add" data-open="documentSheet" type="button">Add</button>
+        </div>
+
+        <div class="wallet-intro">
+          <div class="wallet-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h16v11H4z"/><path d="M4 10h16M16 14h2"/></svg>
+          </div>
+          <div>
+            <strong>Keep the important stuff together</strong>
+            <span>Boarding passes, reservations, tickets and PDFs stay saved on this device.</span>
+          </div>
+        </div>
+
+        <div id="documentsList" class="documents-list"></div>
       </section>
     </main>
 
     <nav class="tabbar" aria-label="Main navigation">
       <div class="tab-indicator" id="tabIndicator"></div>
-      <button class="tab active" data-view="weekView" data-title="Your week">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14v15H5z"/></svg><span>Week</span>
+
+      <button class="tab active" data-view="weekView" data-title="Your week" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14v15H5z"/></svg>
+        <span>Week</span>
       </button>
-      <button class="tab" data-view="ideasView" data-title="Ideas">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M8.4 15.4A6.5 6.5 0 1 1 15.6 15.4C14.6 16.2 14 17 14 18h-4c0-1-.6-1.8-1.6-2.6Z"/></svg><span>Ideas</span>
+
+      <button class="tab" data-view="ideasView" data-title="Ideas" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M8.4 15.4A6.5 6.5 0 1 1 15.6 15.4C14.6 16.2 14 17 14 18h-4c0-1-.6-1.8-1.6-2.6Z"/></svg>
+        <span>Ideas</span>
       </button>
-      <button class="tab" data-view="packingView" data-title="Packing">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M5 7h14v14H5zM9 7v14M15 7v14"/></svg><span>Packing</span>
+
+      <button class="tab" data-view="packingView" data-title="Packing" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M5 7h14v14H5zM9 7v14M15 7v14"/></svg>
+        <span>Packing</span>
+      </button>
+
+      <button class="tab" data-view="walletView" data-title="Wallet" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v13H4zM4 9h16M15.5 14.5h2"/></svg>
+        <span>Wallet</span>
       </button>
     </nav>
   </div>
@@ -80,7 +124,12 @@
   <div class="sheet-backdrop hidden" id="planSheet">
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="planSheetTitle">
       <div class="grabber"></div>
-      <header><button class="text-button" data-close>Cancel</button><h3 id="planSheetTitle">Add plan</h3><button class="text-button strong" form="planForm">Save</button></header>
+      <header>
+        <button class="text-button" data-close type="button">Cancel</button>
+        <h3 id="planSheetTitle">Add plan</h3>
+        <button class="text-button strong" form="planForm" type="submit">Save</button>
+      </header>
+
       <form id="planForm">
         <label><span>What are you doing?</span><input id="planTitle" required placeholder="Boat day"></label>
         <div class="two-col">
@@ -97,7 +146,12 @@
   <div class="sheet-backdrop hidden" id="ideaSheet">
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="ideaSheetTitle">
       <div class="grabber"></div>
-      <header><button class="text-button" data-close>Cancel</button><h3 id="ideaSheetTitle">New idea</h3><button class="text-button strong" form="ideaForm">Save</button></header>
+      <header>
+        <button class="text-button" data-close type="button">Cancel</button>
+        <h3 id="ideaSheetTitle">New idea</h3>
+        <button class="text-button strong" form="ideaForm" type="submit">Save</button>
+      </header>
+
       <form id="ideaForm">
         <label><span>Idea</span><input id="ideaTitle" required placeholder="Rent jetskis"></label>
         <label><span>Note</span><textarea id="ideaNote" placeholder="Optional"></textarea></label>
@@ -108,10 +162,82 @@
   <div class="sheet-backdrop hidden" id="packingSheet">
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="packingSheetTitle">
       <div class="grabber"></div>
-      <header><button class="text-button" data-close>Cancel</button><h3 id="packingSheetTitle">Add item</h3><button class="text-button strong" form="packingForm">Save</button></header>
+      <header>
+        <button class="text-button" data-close type="button">Cancel</button>
+        <h3 id="packingSheetTitle">Add item</h3>
+        <button class="text-button strong" form="packingForm" type="submit">Save</button>
+      </header>
+
       <form id="packingForm">
         <label><span>Item</span><input id="packingText" required placeholder="Sunscreen"></label>
       </form>
+    </section>
+  </div>
+
+  <div class="sheet-backdrop hidden" id="documentSheet">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="documentSheetTitle">
+      <div class="grabber"></div>
+      <header>
+        <button class="text-button" data-close type="button">Cancel</button>
+        <h3 id="documentSheetTitle">Add document</h3>
+        <button class="text-button strong" form="documentForm" type="submit">Save</button>
+      </header>
+
+      <form id="documentForm">
+        <label>
+          <span>Type</span>
+          <select id="documentType">
+            <option>Boarding pass</option>
+            <option>Reservation</option>
+            <option>Ticket</option>
+            <option>Travel document</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label><span>Name</span><input id="documentTitle" placeholder="KLM boarding pass"></label>
+        <label class="file-picker">
+          <span>PDF or image</span>
+          <input id="documentFile" type="file" accept="application/pdf,image/*" required>
+        </label>
+        <p class="sheet-note">Saved locally on this device. PDF and image files are supported.</p>
+      </form>
+    </section>
+  </div>
+
+  <div class="sheet-backdrop hidden" id="staySheet">
+    <section class="sheet compact-sheet" role="dialog" aria-modal="true" aria-labelledby="staySheetTitle">
+      <div class="grabber"></div>
+
+      <div class="stay-sheet-heading">
+        <div class="stay-place-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11.5 12 5l7 6.5V20H5z"/><path d="M9 20v-5h6v5"/></svg>
+        </div>
+        <div>
+          <p class="eyebrow">YOUR STAY</p>
+          <h3 id="staySheetTitle">Doliva Estate</h3>
+          <span>Laganas Road, Agrilia 290 92, Greece</span>
+        </div>
+      </div>
+
+      <div class="action-list">
+        <button class="action-row" id="directionsButton" type="button">
+          <span class="action-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 8-8 8-8-8z"/><path d="M9 11h6M13 9l2 2-2 2"/></svg>
+          </span>
+          <span><strong>Directions</strong><small>Open Google Maps</small></span>
+          <span class="chevron">›</span>
+        </button>
+
+        <button class="action-row" id="airbnbButton" type="button">
+          <span class="action-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 18.5c-2 0-3.1-1.7-2.3-3.7L9 6.2c.7-1.6 1.6-2.4 3-2.4s2.3.8 3 2.4l3.8 8.6c.8 2-.3 3.7-2.3 3.7-1.6 0-3-1.1-4.5-3.1-1.5 2-2.9 3.1-4.5 3.1Z"/></svg>
+          </span>
+          <span><strong>View Airbnb</strong><small>Open the listing</small></span>
+          <span class="chevron">›</span>
+        </button>
+      </div>
+
+      <button class="cancel-action" data-close type="button">Cancel</button>
     </section>
   </div>
 </body>
