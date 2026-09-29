@@ -453,9 +453,7 @@
   };
 
   $("accountButton").onclick = () => {
-    $("accountName").value = state.profile?.name || "";
-    $("accountEmail").value = state.profile?.email || "";
-    openSheet("accountSheet");
+    window.location.href = "account.html";
   };
 
   $("stayButton").onclick = () => openSheet("staySheet");
@@ -546,18 +544,6 @@
     event.target.reset();
     closeSheet($("packingSheet"));
     renderPacking();
-  };
-
-  $("accountForm").onsubmit = event => {
-    event.preventDefault();
-
-    state.profile = {
-      name:$("accountName").value.trim(),
-      email:$("accountEmail").value.trim()
-    };
-
-    save();
-    closeSheet($("accountSheet"));
   };
 
   $("documentForm").onsubmit = async event => {
