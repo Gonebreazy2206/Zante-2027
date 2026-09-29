@@ -326,7 +326,7 @@
       document.querySelectorAll(".view").forEach(view => view.classList.toggle("active", view.id === tab.dataset.view));
       $("pageTitle").textContent = tab.dataset.title;
       $("addButton").style.display = tab.dataset.view === "weekView" ? "grid" : "none";
-      $("tabIndicator").style.transform = `translateX(${index * 100}%)`;
+      $("tabIndicator").style.transform = `translateX(${tab.offsetLeft - 6}px)`;
       if (tab.dataset.view === "walletView") loadDocuments();
     };
   });
@@ -450,6 +450,7 @@
   };
 
   window.addEventListener("beforeunload", clearDocumentUrls);
+  window.addEventListener("resize", () => {\n    const activeTab = document.querySelector(".tab.active");\n    if (activeTab) $("tabIndicator").style.transform = `translateX(${activeTab.offsetLeft - 6}px)`;\n  });
 
   render();
   loadDocuments();
