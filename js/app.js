@@ -68,7 +68,22 @@
 
     document.querySelectorAll("[data-day]").forEach(button => {
       button.onclick = () => {
-        state.selectedDay = Number(button.dataset.day);
+        const nextDay = Number(button.dataset.day);
+        const carousel = document.querySelector(".day-carousel");
+        const direction = nextDay > state.selectedDay ? "slide-left" : "slide-right";
+
+        if (carousel && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          carousel.classList.add(direction);
+          window.setTimeout(() => {
+            state.selectedDay = nextDay;
+            save();
+            renderDays();
+            renderPlans();
+          }, 170);
+          return;
+        }
+
+        state.selectedDay = nextDay;
         save();
         renderDays();
         renderPlans();
@@ -128,12 +143,16 @@
       `;
     }).join("");
 
-    $("plansList").style.minHeight = `${totalHalfHours * HALF_HOUR_HEIGHT}px`;
-    $("plansList").innerHTML = `
-      ${slots}
-      ${plans.length ? "" : '<div class="timeline-now-empty">Nothing planned yet. Tap + to add something to this day.</div>'}
-      ${planMarkup}
+    const timeline = $("plansList");
+    const previousScroll = timeline.scrollTop;
+    timeline.innerHTML = `
+      <div class="timeline-canvas" style="height:${totalHalfHours * HALF_HOUR_HEIGHT}px">
+        ${slots}
+        ${plans.length ? "" : '<div class="timeline-now-empty">Nothing planned yet. Tap + to add something to this day.</div>'}
+        ${planMarkup}
+      </div>
     `;
+    timeline.scrollTop = previousScroll;
 
     document.querySelectorAll("[data-delete-plan]").forEach(button => {
       button.onclick = () => {
