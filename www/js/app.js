@@ -34,12 +34,37 @@
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 
   function renderDays(){
-    $("dayStrip").innerHTML = DAYS.map((day,index) => `
-      <button class="day-chip ${index === state.selectedDay ? "active" : ""}" data-day="${index}" aria-label="${day.name} ${day.date} July">
-        <small>${day.short}</small>
-        <strong>${day.date}</strong>
-      </button>
-    `).join("");
+    const currentIndex = state.selectedDay;
+    const previousIndex = currentIndex - 1;
+    const nextIndex = currentIndex + 1;
+
+    const card = (index, position) => {
+      if (index < 0 || index >= DAYS.length) {
+        return `<span class="day-card adjacent ${position} placeholder" aria-hidden="true"></span>`;
+      }
+
+      const day = DAYS[index];
+      const current = position === "current";
+
+      return `
+        <button
+          class="day-card ${current ? "current" : `adjacent ${position}`}"
+          ${current ? 'type="button" disabled' : `type="button" data-day="${index}"`}
+          aria-label="${day.name} ${day.date} July${current ? ", selected" : ""}">
+          <small>${day.short}</small>
+          <strong>${day.date}</strong>
+          ${current ? `<span class="day-position">${currentIndex === 7 ? "DEPARTURE" : `DAY ${currentIndex + 1}`}</span>` : ""}
+        </button>
+      `;
+    };
+
+    $("dayStrip").innerHTML = `
+      <div class="day-carousel">
+        ${card(previousIndex,"previous")}
+        ${card(currentIndex,"current")}
+        ${card(nextIndex,"next")}
+      </div>
+    `;
 
     document.querySelectorAll("[data-day]").forEach(button => {
       button.onclick = () => {
@@ -57,28 +82,58 @@
   }
 
   function renderPlans(){
+    const TIMELINE_START = 6 * 60;
+    const TIMELINE_END = 29 * 60;
+    const HALF_HOUR_HEIGHT = 24;
+    const totalHalfHours = (TIMELINE_END - TIMELINE_START) / 30;
     const plans = state.plans
       .filter(plan => plan.day === state.selectedDay)
-      .sort((a,b) => a.time.localeCompare(b.time));
+      .sort((a,b) => normalisedMinutes(a.time) - normalisedMinutes(b.time));
 
     $("planCount").textContent = `${plans.length} ${plans.length === 1 ? "plan" : "plans"}`;
 
-    $("plansList").innerHTML = plans.length
-      ? plans.map(plan => `
-          <article class="plan-row">
-            <div class="time">
-              <strong>${esc(plan.time)}</strong>
-              ${plan.end ? `<span>to ${esc(plan.end)}</span>` : ""}
-            </div>
-            <div class="plan-main">
-              <strong>${esc(plan.title)}</strong>
-              ${plan.location ? `<div class="meta">${esc(plan.location)}</div>` : ""}
-              ${plan.notes ? `<div class="meta">${esc(plan.notes)}</div>` : ""}
-            </div>
-            <button class="delete" data-delete-plan="${plan.id}" aria-label="Delete ${esc(plan.title)}">×</button>
-          </article>
-        `).join("")
-      : `<div class="empty"><strong>Nothing planned yet</strong><span>Tap + to add the first thing for this day.</span></div>`;
+    const slots = Array.from({length: totalHalfHours + 1}, (_, index) => {
+      const minuteValue = TIMELINE_START + index * 30;
+      const displayMinutes = minuteValue % (24 * 60);
+      const hour = Math.floor(displayMinutes / 60);
+      const minute = displayMinutes % 60;
+      const isHour = minute === 0;
+      const label = `${String(hour).padStart(2,"0")}:${String(minute).padStart(2,"0")}`;
+
+      return `
+        <div class="timeline-slot ${isHour ? "hour" : "half"}" style="top:${index * HALF_HOUR_HEIGHT}px">
+          <span class="timeline-time">${isHour ? label : ""}</span>
+          <span class="timeline-line"></span>
+        </div>
+      `;
+    }).join("");
+
+    const planMarkup = plans.map(plan => {
+      const start = Math.max(TIMELINE_START, Math.min(TIMELINE_END - 30, normalisedMinutes(plan.time)));
+      let end = plan.end ? normalisedMinutes(plan.end) : start + 60;
+
+      if (plan.end && end <= start) end += 24 * 60;
+      end = Math.max(start + 30, Math.min(TIMELINE_END, end));
+
+      const top = ((start - TIMELINE_START) / 30) * HALF_HOUR_HEIGHT + 2;
+      const height = Math.max(40, ((end - start) / 30) * HALF_HOUR_HEIGHT - 4);
+
+      return `
+        <article class="timeline-plan" style="top:${top}px;height:${height}px">
+          <strong>${esc(plan.title)}</strong>
+          <div class="plan-time">${esc(plan.time)}${plan.end ? ` – ${esc(plan.end)}` : ""}</div>
+          ${plan.location ? `<div class="meta">${esc(plan.location)}</div>` : ""}
+          <button class="delete" data-delete-plan="${plan.id}" aria-label="Delete ${esc(plan.title)}">×</button>
+        </article>
+      `;
+    }).join("");
+
+    $("plansList").style.minHeight = `${totalHalfHours * HALF_HOUR_HEIGHT}px`;
+    $("plansList").innerHTML = `
+      ${slots}
+      ${plans.length ? "" : '<div class="timeline-now-empty">Nothing planned yet. Tap + to add something to this day.</div>'}
+      ${planMarkup}
+    `;
 
     document.querySelectorAll("[data-delete-plan]").forEach(button => {
       button.onclick = () => {
@@ -89,6 +144,14 @@
         renderPlans();
       };
     });
+  }
+
+  function normalisedMinutes(time){
+    const [hourText,minuteText] = String(time || "00:00").split(":");
+    let minutes = Number(hourText) * 60 + Number(minuteText || 0);
+
+    if (minutes < 6 * 60) minutes += 24 * 60;
+    return minutes;
   }
 
   function renderIdeas(){
