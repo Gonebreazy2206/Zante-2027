@@ -18,7 +18,7 @@
   const STORE_NAME = "documents";
 
   const state = Object.assign(
-    {selectedDay:0,plans:[],ideas:[],packing:[]},
+    {selectedDay:0,plans:[],ideas:[],packing:[],profile:{name:"",email:""}},
     JSON.parse(localStorage.getItem(KEY) || "{}")
   );
 
@@ -452,6 +452,12 @@
     openSheet("planSheet");
   };
 
+  $("accountButton").onclick = () => {
+    $("accountName").value = state.profile?.name || "";
+    $("accountEmail").value = state.profile?.email || "";
+    openSheet("accountSheet");
+  };
+
   $("stayButton").onclick = () => openSheet("staySheet");
 
   $("directionsButton").onclick = () => {
@@ -540,6 +546,18 @@
     event.target.reset();
     closeSheet($("packingSheet"));
     renderPacking();
+  };
+
+  $("accountForm").onsubmit = event => {
+    event.preventDefault();
+
+    state.profile = {
+      name:$("accountName").value.trim(),
+      email:$("accountEmail").value.trim()
+    };
+
+    save();
+    closeSheet($("accountSheet"));
   };
 
   $("documentForm").onsubmit = async event => {
